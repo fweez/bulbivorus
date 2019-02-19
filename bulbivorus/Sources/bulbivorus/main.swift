@@ -11,39 +11,26 @@ import Foundation
 let outputQueue = OperationQueue.init()
 outputQueue.maxConcurrentOperationCount = 8
 
-let readCallback: CFReadStreamClientCallBack = { (stream: CFReadStream?, eventType: CFStreamEventType, info: UnsafeMutableRawPointer?) -> Void in
-    print("Read callback")
-}
+var connections: [Connection] = []
 
 func acceptConnection(handle: CFSocketNativeHandle) {
     print("Accepted connection")
     
-    var readStream: Unmanaged<CFReadStream>?
-    var writeStream: Unmanaged<CFWriteStream>?
-    CFStreamCreatePairWithSocket(kCFAllocatorDefault, handle, &readStream, &writeStream)
-    if let readStream = readStream {
-        CFReadStreamSetProperty(readStream.takeUnretainedValue(), CFStreamPropertyKey(kCFStreamPropertyShouldCloseNativeSocket), kCFBooleanTrue)
-        print("Had readStream")
-//        CFReadStreamSetClient(readStream.takeUnretainedValue(), CFStreamEventType.hasBytesAvailable.rawValue, readCallback, nil)
-//        CFReadStreamScheduleWithRunLoop(readStream.takeUnretainedValue(), CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode)
-        guard CFReadStreamOpen(readStream.takeUnretainedValue()) else {
-            print("open error: \(CFReadStreamGetError(readStream.takeUnretainedValue()))")
-            return
-        }
-        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 128)
-        if CFReadStreamRead(readStream.takeUnretainedValue(), buffer, 128) > 0 {
-            let input = String(cString: buffer)
-            print("Read: \(input)")
-        } else {
-            print("read error: \(CFReadStreamGetError(readStream.takeUnretainedValue()))")
-        }
-        
+    var rs: Unmanaged<CFReadStream>?
+    var ws: Unmanaged<CFWriteStream>?
+    CFStreamCreatePairWithSocket(kCFAllocatorDefault, handle, &rs, &ws)
+    guard let readStream = rs?.takeRetainedValue() as InputStream? else {
+        print("Could not open read stream")
+        return
     }
-    if let writeStream = writeStream {
-        CFWriteStreamSetProperty(writeStream.takeUnretainedValue(), CFStreamPropertyKey(kCFStreamPropertyShouldCloseNativeSocket), kCFBooleanTrue)
-        print("Had writeStream")
+    guard let writeStream = ws?.takeRetainedValue() as OutputStream? else {
+        print("Could not open write stream")
+        return
     }
     
+    let connection = Connection(readStream: readStream, writeStream: writeStream)
+    connections.append(connection)
+    connection.open()
 }
 
 let connectCallBack: CFSocketCallBack = { (s: CFSocket?, callbackType: CFSocketCallBackType, address: CFData?, rawData: UnsafeRawPointer?, info: UnsafeMutableRawPointer?) -> Void in
