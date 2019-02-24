@@ -57,6 +57,9 @@ class Connection: NSObject {
             return
         }
         
+        CFReadStreamSetProperty(readStream, CFStreamPropertyKey(kCFStreamPropertyShouldCloseNativeSocket), kCFBooleanTrue)
+        CFWriteStreamSetProperty(writeStream, CFStreamPropertyKey(kCFStreamPropertyShouldCloseNativeSocket), kCFBooleanTrue)
+        
         let connection = Connection(readStream: readStream, writeStream: writeStream)
         print("Connections count before filter: \(connections.count)")
         connections = Connection.connections.filter( { $0.isOpen == false })
@@ -87,6 +90,7 @@ class Connection: NSObject {
     let readStream: InputStream
     let writeStream: OutputStream
     var isOpen: Bool = false
+    var router = Router()
     
     init(readStream: InputStream, writeStream: OutputStream) {
         self.readStream = readStream
@@ -131,11 +135,27 @@ extension Connection: StreamDelegate {
     }
     
     func handleReadStream(_ stream: Stream, handle eventCode: Stream.Event) {
+        guard let stream = stream as? InputStream else {
+            print("Couldn't coerce stream into input stream")
+            return
+        }
+        
         switch eventCode {
         case Stream.Event.openCompleted:
             print("Finished opening read stream")
         case Stream.Event.hasBytesAvailable:
             print("Read stream has bytes")
+            while stream.hasBytesAvailable {
+                let chunksize = 256
+                let data = UnsafeMutablePointer<UInt8>.allocate(capacity: chunksize)
+                stream.read(data, maxLength: chunksize)
+                router.request.append(String(cString: data))
+                guard router.finished == false else {
+                    self.close()
+                    return
+                }
+            }
+            
         case Stream.Event.hasSpaceAvailable:
             print("Read stream has space ?!?!?")
         case Stream.Event.errorOccurred:
