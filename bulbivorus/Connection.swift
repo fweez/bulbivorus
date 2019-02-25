@@ -9,7 +9,7 @@
 import Foundation
 
 class Connection: NSObject {
-    static let connectionQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.utility)
+    static let connectionQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.userInteractive)
     static var connections: [Connection] = []
     
     static func startListener() {
@@ -87,12 +87,15 @@ class Connection: NSObject {
         }
     }
     
+    let connectionQueue: DispatchQueue
     let readStream: InputStream
     let writeStream: OutputStream
     var isOpen: Bool = false
     var router = Router()
+    var handler: Handler?
     
     init(readStream: InputStream, writeStream: OutputStream) {
+        self.connectionQueue = DispatchQueue(label: "com.rmf.bulbivorus.connectionQueue", target: Connection.connectionQueue)
         self.readStream = readStream
         self.writeStream = writeStream
         
@@ -103,7 +106,7 @@ class Connection: NSObject {
     }
     
     func open() {
-        Connection.connectionQueue.async {
+        self.connectionQueue.sync {
             self.isOpen = true
             self.readStream.schedule(in: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
             self.writeStream.schedule(in: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
@@ -151,9 +154,15 @@ extension Connection: StreamDelegate {
                 stream.read(data, maxLength: chunksize)
                 router.request.append(String(cString: data))
                 guard router.finished == false else {
-                    self.close()
-                    return
+                    break
                 }
+            }
+            
+            do {
+                self.handler = try self.router.buildHandler(delegate: self)
+                self.handler?.start()
+            } catch {
+                assertionFailure("Router couldn't build a handler for request \(self.router.request)")
             }
             
         case Stream.Event.hasSpaceAvailable:
@@ -182,5 +191,19 @@ extension Connection: StreamDelegate {
         default:
             print("Write stream unknown event code: \(eventCode)")
         }
+    }
+}
+
+extension Connection: HandlerDelegate {
+    func handlerHasData(_ data: Data) -> Int {
+        let buff = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: 128)
+        let (_, endIndex) = buff.initialize(from: data)
+        guard let p = buff.baseAddress else { return 0 }
+        self.writeStream.write(p, maxLength: endIndex)
+        return endIndex
+    }
+    
+    func complete() {
+        self.close()
     }
 }

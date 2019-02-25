@@ -13,6 +13,7 @@ struct Router {
     
     enum RequestError: Error {
         case requestTooLong
+        case requestNotFinished
     }
     
     var request: String = ""
@@ -27,5 +28,13 @@ struct Router {
     var finished: Bool {
         guard self.request.count < Router.maxRequestLength else { return false }
         return self.request.hasSuffix("\r\n")
+    }
+    
+    func buildHandler(delegate: HandlerDelegate) throws -> Handler  {
+        guard self.finished else {
+            throw Router.RequestError.requestNotFinished
+        }
+        
+        return Handler(request: self.request, delegate: delegate)
     }
 }
