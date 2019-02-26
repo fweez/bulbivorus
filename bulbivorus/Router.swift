@@ -19,6 +19,7 @@ struct Router {
     enum RequestError: Error {
         case requestTooLong
         case requestNotFinished
+        case noRouteForRequest
     }
     
     mutating func appendToRequest(_ s: String) throws {
@@ -33,11 +34,21 @@ struct Router {
         return self.request.hasSuffix("\r\n")
     }
     
-    func buildHandler(delegate: HandlerDelegate) throws -> Handler  {
+    func buildHandler(delegate: HandlerDelegate) -> Handler  {
         guard self.finished else {
-            throw Router.RequestError.requestNotFinished
+            return ErrorHandler(request: self.request, delegate: delegate, error: Router.RequestError.requestNotFinished)
         }
         
-        return HelloFriendHandler(request: self.request, delegate: delegate)
+        let trimmedRequest = self.request.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        for route in configuration.routes {
+            guard let range = trimmedRequest.range(of: route.requestMatch, options: .regularExpression), range.lowerBound == trimmedRequest.startIndex, range.upperBound == trimmedRequest.endIndex else { continue }
+            
+            switch route.kind {
+            case .helloFriend: return HelloFriendHandler(request: trimmedRequest, delegate: delegate)
+            }
+        }
+        
+        return ErrorHandler(request: self.request, delegate: delegate, error: Router.RequestError.noRouteForRequest)
     }
 }

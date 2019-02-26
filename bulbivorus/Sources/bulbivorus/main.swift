@@ -8,5 +8,5 @@
 
 import Foundation
 
-Server.shared.configuration = ServerConfiguration()
+Server.shared.configuration = try ServerConfiguration()
 Server.startListener()

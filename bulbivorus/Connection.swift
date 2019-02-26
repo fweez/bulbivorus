@@ -44,15 +44,12 @@ class Connection: NSObject {
     }
     
     func close() {
-        print("Called close")
-        self.connectionQueue.async {
-            print("Closing streams & removing from runloop")
-            self.isOpen = false
-            self.readStream.close()
-            self.writeStream.close()
-            self.readStream.remove(from: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
-            self.writeStream.remove(from: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
-        }
+        print("Closing streams & removing from runloop")
+        self.isOpen = false
+        self.readStream.close()
+        self.writeStream.close()
+        self.readStream.remove(from: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
+        self.writeStream.remove(from: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
     }
 }
 
@@ -88,13 +85,8 @@ extension Connection: StreamDelegate {
                 }
             }
             
-            do {
-                self.handler = try self.router.buildHandler(delegate: self)
-                self.handler?.start()
-            } catch {
-                assertionFailure("Router couldn't build a handler for request \(self.router.request)")
-            }
-            
+            self.handler = self.router.buildHandler(delegate: self)
+            self.handler?.start()
         case Stream.Event.hasSpaceAvailable:
             print("Read stream has space ?!?!?")
         case Stream.Event.errorOccurred:

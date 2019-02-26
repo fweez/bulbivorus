@@ -35,3 +35,19 @@ struct HelloFriendHandler: Handler {
         self.delegate.complete()
     }
 }
+
+struct ErrorHandler: Handler {
+    let request: String
+    let delegate: HandlerDelegate
+    let error: Error
+    
+    func start() {
+        let output = "Error: \(error)"
+        var outputData = Data(output.utf8)
+        while outputData.count > 0 {
+            let len = self.delegate.handlerHasData(outputData)
+            outputData.removeSubrange(0..<len)
+        }
+        self.delegate.complete()
+    }
+}
