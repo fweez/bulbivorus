@@ -15,7 +15,13 @@ protocol HandlerDelegate {
     func complete()
 }
 
-struct Handler {
+protocol Handler {
+    var request: String { get }
+    var delegate: HandlerDelegate { get }
+    func start() -> Void
+}
+
+struct HelloFriendHandler: Handler {
     let request: String
     let delegate: HandlerDelegate
     

@@ -9,24 +9,27 @@
 import Foundation
 
 struct Router {
-    static var maxRequestLength = 1024
+    let configuration: RouterConfiguration
+    var request: String = ""
+
+    init(configuration: RouterConfiguration) {
+        self.configuration = configuration
+    }
     
     enum RequestError: Error {
         case requestTooLong
         case requestNotFinished
     }
     
-    var request: String = ""
-    
     mutating func appendToRequest(_ s: String) throws {
-        guard self.request.count + s.count <= Router.maxRequestLength else  {
+        guard self.request.count + s.count <= self.configuration.maxRequestLength else  {
             throw Router.RequestError.requestTooLong
         }
         self.request.append(s)
     }
     
     var finished: Bool {
-        guard self.request.count < Router.maxRequestLength else { return false }
+        guard self.request.count < self.configuration.maxRequestLength else { return false }
         return self.request.hasSuffix("\r\n")
     }
     
@@ -35,6 +38,6 @@ struct Router {
             throw Router.RequestError.requestNotFinished
         }
         
-        return Handler(request: self.request, delegate: delegate)
+        return HelloFriendHandler(request: self.request, delegate: delegate)
     }
 }
