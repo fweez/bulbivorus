@@ -18,7 +18,20 @@ protocol HandlerDelegate {
 protocol Handler {
     var request: String { get }
     var delegate: HandlerDelegate { get }
+    
     func start() -> Void
+    
+    func sendString(_ s: String) -> Void
+}
+
+extension Handler {
+    func sendString(_ s: String) {
+        var outputData = Data(s.utf8)
+        while outputData.count > 0 {
+            let len = self.delegate.handlerHasData(outputData)
+            outputData.removeSubrange(0..<len)
+        }
+    }
 }
 
 struct HelloFriendHandler: Handler {
@@ -26,12 +39,7 @@ struct HelloFriendHandler: Handler {
     let delegate: HandlerDelegate
     
     func start() {
-        let output = "Hello friend\r\n"
-        var outputData = Data(output.utf8)
-        while outputData.count > 0 {
-            let len = self.delegate.handlerHasData(outputData)
-            outputData.removeSubrange(0..<len)
-        }
+        self.sendString("Hello friend\r\n")
         self.delegate.complete()
     }
 }
@@ -42,12 +50,26 @@ struct ErrorHandler: Handler {
     let error: Error
     
     func start() {
-        let output = "Error: \(error)"
-        var outputData = Data(output.utf8)
-        while outputData.count > 0 {
-            let len = self.delegate.handlerHasData(outputData)
-            outputData.removeSubrange(0..<len)
-        }
+        self.sendString("Error: \(self.error)")
         self.delegate.complete()
+    }
+}
+
+struct FileHandler: Handler {
+    let request: String
+    let delegate: HandlerDelegate
+    let configuration: FileHandlerConfiguration
+    
+    func start() {
+        defer { self.delegate.complete() }
+        
+        do {
+            let s = try String(contentsOfFile: self.configuration.root + self.request)
+            self.sendString(s)
+        }
+        catch {
+            self.sendString("Error: \(error)")
+        }
+        
     }
 }

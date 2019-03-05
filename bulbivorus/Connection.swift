@@ -120,7 +120,8 @@ extension Connection: HandlerDelegate {
     func handlerHasData(_ data: Data) -> Int {
         let chunkSize = self.configuration.writeChunkBytes
         let buff = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: chunkSize)
-        let (_, endIndex) = buff.initialize(from: data)
+        let chunk = data[0..<min(data.underestimatedCount, chunkSize - 1)]
+        let (_, endIndex) = buff.initialize(from: chunk)
         guard let p = buff.baseAddress else { return 0 }
         self.writeStream.write(p, maxLength: endIndex)
         return endIndex

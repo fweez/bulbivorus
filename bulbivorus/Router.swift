@@ -46,6 +46,7 @@ struct Router {
             
             switch route.kind {
             case .helloFriend: return HelloFriendHandler(request: trimmedRequest, delegate: delegate)
+            case .file: return FileHandler(request: trimmedRequest, delegate: delegate, configuration: route.handlerConfiguration[.file] as! FileHandlerConfiguration)
             }
         }
         
