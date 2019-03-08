@@ -13,8 +13,9 @@ class Server {
     
     let connectionsQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.userInteractive)
     var connections: [Connection] = []
-    var configuration: ServerConfiguration!
+    var configuration: ServerConfiguration = try! ServerConfiguration()
     
+    static var defaultPort = 70
     static func startListener() {
         let socketRef = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, CFStreamEventType.hasBytesAvailable.rawValue, Server.connectCallBack, nil)
         
@@ -22,7 +23,7 @@ class Server {
         let addrSize = socklen_t(INET_ADDRSTRLEN)
         sin.sin_len = UInt8(addrSize)
         sin.sin_family = sa_family_t(AF_INET)
-        sin.sin_port = UInt16(Server.shared.configuration.port).bigEndian
+        sin.sin_port = UInt16(Server.shared.configuration.port ?? self.defaultPort).bigEndian
         sin.sin_addr.s_addr = INADDR_ANY
         
         let sinSize = MemoryLayout.size(ofValue: sin)

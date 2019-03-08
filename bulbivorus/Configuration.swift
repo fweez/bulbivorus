@@ -10,33 +10,48 @@ import Foundation
 
 struct ServerConfiguration {
     /// What port to run the server on. Gopher default is 70.
-    let port = 70
+    let port: Int? = nil
     
     let connectionConfiguration: ConnectionConfiguration
     
     init() throws {
         let fhCfg = FileHandlerConfiguration(root: "/Users/ryan/gopherhole")
         let routes = [
-            Route(kind: .helloFriend, requestMatch: "/hello", handlerConfiguration: [:]),
-            Route(kind: .file, requestMatch: "/.*", handlerConfiguration: [.file: fhCfg]),
+            Route(kind: .helloFriend, requestMatch: "/hello", handlerConfiguration: nil),
+            Route(kind: .file, requestMatch: "/.*", handlerConfiguration: fhCfg),
         ]
-        let routerCfg = RouterConfiguration(routes: routes)
-        self.connectionConfiguration = ConnectionConfiguration(routerConfiguration: routerCfg)
+        let routerCfg = RouterConfiguration(maxRequestLength: nil, routes: routes)
+        self.connectionConfiguration = ConnectionConfiguration(readChunkBytes: nil, writeChunkBytes: nil, routerConfiguration: routerCfg)
+    }
+}
+
+extension ServerConfiguration: Codable {
+    enum CodingKeys: String, CodingKey {
+        case port
+        case connectionConfiguration = "connection"
     }
 }
 
 struct ConnectionConfiguration {
     /// Size of the read buffer, in bytes
-    let readChunkBytes = 256
+    let readChunkBytes: Int?
     /// Size of the write buffer, in bytes
-    let writeChunkBytes = 256
+    let writeChunkBytes: Int?
     
     let routerConfiguration: RouterConfiguration
 }
 
-struct RouterConfiguration {
+extension ConnectionConfiguration: Codable {
+    enum CodingKeys: String, CodingKey {
+        case readChunkBytes
+        case writeChunkBytes
+        case routerConfiguration = "router"
+    }
+}
+
+struct RouterConfiguration: Codable {
     /// Maximum length of requests, in characters
-    let maxRequestLength = 1024
+    let maxRequestLength: Int?
     
     /**
      List of routes to service.
@@ -55,7 +70,7 @@ struct RouterConfiguration {
     let routes: [Route]
 }
 
-enum HandlerKind {
+enum HandlerKind: String, Codable {
     case helloFriend
     case file
 }
@@ -65,11 +80,42 @@ struct Route {
     let kind: HandlerKind
     /// A regex to use to match request paths
     let requestMatch: String
-    /// Handler configuration for this route
-    let handlerConfiguration: [HandlerKind: Any]
+    /// Handler configurations for this route
+    let handlerConfiguration: Codable?
 }
 
-struct FileHandlerConfiguration {
+extension Route: Decodable {
+    enum CodingKeys: String, CodingKey {
+        case kind, requestMatch, handlerConfiguration
+    }
+    
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try values.decode(HandlerKind.self, forKey: .kind)
+        requestMatch = try values.decode(String.self, forKey: .requestMatch)
+        switch kind {
+        case .helloFriend: handlerConfiguration = nil // no valid configuration
+        case .file: handlerConfiguration = try values.decode(FileHandlerConfiguration.self, forKey: .handlerConfiguration)
+        }
+    }
+}
+
+extension Route: Encodable {
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: Route.CodingKeys.self)
+        try container.encode(kind, forKey: .kind)
+        try container.encode(requestMatch, forKey: .requestMatch)
+        guard let cfg = handlerConfiguration else { return }
+        switch kind {
+        case .helloFriend: break // no valid configuration
+        case .file:
+            guard let fhcfg = cfg as? FileHandlerConfiguration else { return }
+            try container.encode(fhcfg, forKey: .handlerConfiguration)
+        }
+    }
+}
+
+struct FileHandlerConfiguration: Codable {
     /// Root of a directory to serve with a FileHandler
     let root: String
 }

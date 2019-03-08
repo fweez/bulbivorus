@@ -24,6 +24,7 @@
 		94D4A6FA221B6EDC00A991A8 /* bulbivorus */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bulbivorus; sourceTree = BUILT_PRODUCTS_DIR; };
 		94D4A6FD221B6EDC00A991A8 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = main.swift; path = Sources/bulbivorus/main.swift; sourceTree = "<group>"; };
 		94D4A6FF221B6EDC00A991A8 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		94F8618D2232E356000B7C5E /* bulbivorus-config.example.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "bulbivorus-config.example.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +64,7 @@
 				94AC557C2223018D0047386E /* Router.swift */,
 				94AC557E222308B30047386E /* Handler.swift */,
 				94D4A6FF221B6EDC00A991A8 /* Package.swift */,
+				94F8618D2232E356000B7C5E /* bulbivorus-config.example.json */,
 			);
 			path = bulbivorus;
 			sourceTree = "<group>";

@@ -19,6 +19,9 @@ class Connection: NSObject {
     
     var isOpen: Bool = false
     
+    static var defaultReadChunkSize = 512
+    static var defaultWriteChunkSize = 512
+    
     init(readStream: InputStream, writeStream: OutputStream, onQueue target: DispatchQueue, configuration: ConnectionConfiguration) {
         self.connectionQueue = DispatchQueue(label: "com.rmf.bulbivorus.connectionQueue", target: target)
         self.readStream = readStream
@@ -76,7 +79,7 @@ extension Connection: StreamDelegate {
         case Stream.Event.hasBytesAvailable:
             print("Read stream has bytes")
             while stream.hasBytesAvailable {
-                let chunksize = self.configuration.readChunkBytes
+                let chunksize = self.configuration.readChunkBytes ?? Connection.defaultReadChunkSize
                 let data = UnsafeMutablePointer<UInt8>.allocate(capacity: chunksize)
                 stream.read(data, maxLength: chunksize)
                 router.request.append(String(cString: data))
@@ -118,7 +121,7 @@ extension Connection: StreamDelegate {
 
 extension Connection: HandlerDelegate {
     func handlerHasData(_ data: Data) -> Int {
-        let chunkSize = self.configuration.writeChunkBytes
+        let chunkSize = self.configuration.writeChunkBytes ?? Connection.defaultWriteChunkSize
         let buff = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: chunkSize)
         let chunk = data[0..<min(data.underestimatedCount, chunkSize - 1)]
         let (_, endIndex) = buff.initialize(from: chunk)

@@ -8,5 +8,26 @@
 
 import Foundation
 
-Server.shared.configuration = try ServerConfiguration()
+let configDirs: [URL?] = [
+    URL(fileURLWithPath: FileManager.default.currentDirectoryPath),
+    FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first,
+    FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.localDomainMask).first,
+]
+for configDir in configDirs {
+    guard let configURL = configDir?.appendingPathComponent("bulbivorus-config.json") else { continue }
+    print("Looking in \(configURL.absoluteString) for configuration")
+    guard let configData = try? Data(contentsOf: configURL) else {
+        print("Couldn't read contents of file.")
+        continue
+    }
+    do {
+        let config = try JSONDecoder().decode(ServerConfiguration.self, from: configData)
+        Server.shared.configuration = config
+        print("Loaded config from \(configURL.absoluteString)")
+        break
+    } catch {
+        print("Error loading config: \(error)")
+    }
+}
+
 Server.startListener()
