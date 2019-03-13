@@ -6,7 +6,7 @@
             "routes": [
                 {
                     "kind": "file",
-                    "requestMatch": "/.*",
+                    "requestMatch": ".*",
                     "handlerConfiguration": {
                         "root": "/Users/ryan/gopherhole"
                     }

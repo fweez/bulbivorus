@@ -68,7 +68,7 @@ struct FileHandler: Handler {
     
     func start() {
         do {
-            if self.request.suffix(1) == "/" {
+            if self.request.suffix(1) == "/" || self.request == "" {
                 try self.sendList()
             } else {
                 try self.send(documentLocation: self.request)
@@ -91,7 +91,11 @@ struct FileHandler: Handler {
     }
     
     func send(documentLocation: String) throws {
-        let path = self.configuration.root + documentLocation
+        var root = self.configuration.root
+        if root.suffix(1) != "/" {
+            root.append("/")
+        }
+        let path = root + documentLocation
         guard FileManager.default.isReadableFile(atPath: path) else {
             throw FileHandlerError.fileDoesNotExist
         }
