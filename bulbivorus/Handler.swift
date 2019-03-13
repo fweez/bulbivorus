@@ -26,7 +26,8 @@ protocol Handler {
 
 extension Handler {
     func sendString(_ s: String) {
-        var outputData = Data(s.utf8)
+        var output = s + "\r\n\r\n.\r\n"
+        var outputData = Data(output.utf8)
         while outputData.count > 0 {
             let len = self.delegate.handlerHasData(outputData)
             outputData.removeSubrange(0..<len)
@@ -55,21 +56,46 @@ struct ErrorHandler: Handler {
     }
 }
 
+enum FileHandlerError: Error {
+    case fileDoesNotExist
+    case couldNotListDirectory
+}
+
 struct FileHandler: Handler {
     let request: String
     let delegate: HandlerDelegate
     let configuration: FileHandlerConfiguration
     
     func start() {
-        defer { self.delegate.complete() }
-        
         do {
-            let s = try String(contentsOfFile: self.configuration.root + self.request)
-            self.sendString(s)
+            if self.request.suffix(1) == "/" {
+                try self.sendList()
+            } else {
+                try self.send(documentLocation: self.request)
+            }
+            self.delegate.complete()
+        } catch {
+            let h = ErrorHandler(request: self.request, delegate: self.delegate, error: error)
+            h.start()
         }
-        catch {
-            self.sendString("Error: \(error)")
+    }
+    
+    func sendList() throws {
+        let mapLocation = self.request + "gophermap"
+        do {
+            try self.send(documentLocation: mapLocation)
+        } catch FileHandlerError.fileDoesNotExist {
+            self.sendString("TODO: directory listings")
+            throw FileHandlerError.couldNotListDirectory
         }
-        
+    }
+    
+    func send(documentLocation: String) throws {
+        let path = self.configuration.root + documentLocation
+        guard FileManager.default.isReadableFile(atPath: path) else {
+            throw FileHandlerError.fileDoesNotExist
+        }
+        let s = try String(contentsOfFile: path)
+        self.sendString(s)
     }
 }
