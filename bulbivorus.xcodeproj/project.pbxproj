@@ -16,11 +16,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		94AC557C2223018D0047386E /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
-		94AC557E222308B30047386E /* Handler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Handler.swift; sourceTree = "<group>"; };
-		94AC5580222479860047386E /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
-		94AC558222247DA30047386E /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
-		94D2DF0E221C73830004C498 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		94AC557C2223018D0047386E /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Router.swift; path = Sources/bulbivorus/Router.swift; sourceTree = "<group>"; };
+		94AC557E222308B30047386E /* Handler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Handler.swift; path = Sources/bulbivorus/Handler.swift; sourceTree = "<group>"; };
+		94AC5580222479860047386E /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Configuration.swift; path = Sources/bulbivorus/Configuration.swift; sourceTree = "<group>"; };
+		94AC558222247DA30047386E /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Server.swift; path = Sources/bulbivorus/Server.swift; sourceTree = "<group>"; };
+		94D2DF0E221C73830004C498 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Connection.swift; path = Sources/bulbivorus/Connection.swift; sourceTree = "<group>"; };
 		94D4A6FA221B6EDC00A991A8 /* bulbivorus */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bulbivorus; sourceTree = BUILT_PRODUCTS_DIR; };
 		94D4A6FD221B6EDC00A991A8 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = main.swift; path = Sources/bulbivorus/main.swift; sourceTree = "<group>"; };
 		94D4A6FF221B6EDC00A991A8 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
