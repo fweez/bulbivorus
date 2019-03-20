@@ -12,17 +12,13 @@ let package = Package(
     name: "bulbivorus",
 
     dependencies: [
-        /* Add your package dependencies in here
-        .package(url: "https://github.com/AlwaysRightInstitute/cows.git",
-                 from: "1.0.0"),
-        */
+        .package(url: "https://github.com/IBM-Swift/BlueSocket.git", from:"1.0.8"),
     ],
 
     targets: [
         .target(name: "bulbivorus", 
                 dependencies: [
-                  /* Add your target dependencies in here, e.g.: */
-                  // "cows",
+                    "Socket",
                 ])
     ]
 )
