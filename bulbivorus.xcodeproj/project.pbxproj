@@ -38,11 +38,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		94999C982242B7C500A764C8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		94D4A6F1221B6EDC00A991A8 = {
 			isa = PBXGroup;
 			children = (
 				94D4A6FC221B6EDC00A991A8 /* bulbivorus */,
 				94D4A6FB221B6EDC00A991A8 /* Products */,
+				94999C982242B7C500A764C8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -138,7 +146,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "verbose=no swift xcode build";
+			shellScript = "verbose=no swift xcode build\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

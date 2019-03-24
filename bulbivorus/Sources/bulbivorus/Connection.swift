@@ -7,130 +7,92 @@
 //
 
 import Foundation
+import Socket
 
-class Connection: NSObject {
+protocol ConnectionDelegate {
+    func finished(sender: Connection) -> Void
+}
+
+class Connection {
+    static let connectionQueue = DispatchQueue.global(qos: .userInteractive)
     let connectionQueue: DispatchQueue
-    let readStream: InputStream
-    let writeStream: OutputStream
     var configuration: ConnectionConfiguration
     
+    var delegate: ConnectionDelegate?
+    var socket: Socket
     var router: Router
     var handler: Handler?
     
-    var isOpen: Bool = false
+    var stopped: Bool = false
     
     static var defaultReadChunkSize = 512
     static var defaultWriteChunkSize = 512
     
-    init(readStream: InputStream, writeStream: OutputStream, onQueue target: DispatchQueue, configuration: ConnectionConfiguration) {
-        self.connectionQueue = DispatchQueue(label: "com.rmf.bulbivorus.connectionQueue", target: target)
-        self.readStream = readStream
-        self.writeStream = writeStream
+    init(_ clientSocket: Socket, configuration: ConnectionConfiguration, delegate: ConnectionDelegate) {
+        socket = clientSocket
         self.configuration = configuration
-        self.router = Router(configuration: configuration.routerConfiguration)
-        super.init()
-        
-        self.readStream.delegate = self
-        self.writeStream.delegate = self
+        self.delegate = delegate
+        connectionQueue = DispatchQueue(label: "com.rmf.bulbivorus.connectionQueue.\(socket.socketfd)", target: Connection.connectionQueue)
+        router = Router(configuration: configuration.routerConfiguration)
     }
     
-    func open() {
-        self.connectionQueue.async {
-            print("Opened connection")
-            self.isOpen = true
-            self.readStream.schedule(in: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
-            self.writeStream.schedule(in: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
-            self.readStream.open()
-            self.writeStream.open()
-            RunLoop.current.run()
-        }
-    }
-    
-    func close() {
-        print("Closing streams & removing from runloop")
-        self.isOpen = false
-        self.readStream.close()
-        self.writeStream.close()
-        self.readStream.remove(from: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
-        self.writeStream.remove(from: RunLoop.current, forMode: RunLoopMode.defaultRunLoopMode)
-    }
-}
+    func start() {
+        connectionQueue.async { [unowned self] in
+            let readCapacity = self.configuration.readChunkBytes ?? Connection.defaultReadChunkSize
 
-extension Connection: StreamDelegate {
-    func stream(_ stream: Stream, handle eventCode: Stream.Event) {
-        if stream == self.readStream {
-            self.handleReadStream(stream, handle: eventCode)
-        } else if stream == self.writeStream {
-            self.handleWriteStream(stream, handle: eventCode)
-        } else {
-            print("Unknown stream!")
-        }
-    }
-    
-    func handleReadStream(_ stream: Stream, handle eventCode: Stream.Event) {
-        guard let stream = stream as? InputStream else {
-            print("Couldn't coerce stream into input stream")
-            return
-        }
-        
-        switch eventCode {
-        case Stream.Event.openCompleted:
-            print("Finished opening read stream")
-        case Stream.Event.hasBytesAvailable:
-            print("Read stream has bytes")
-            while stream.hasBytesAvailable {
-                let chunksize = self.configuration.readChunkBytes ?? Connection.defaultReadChunkSize
-                let data = UnsafeMutablePointer<UInt8>.allocate(capacity: chunksize)
-                stream.read(data, maxLength: chunksize)
-                router.request.append(String(cString: data))
-                guard router.finished == false else {
-                    break
+            while self.handler == nil && self.stopped == false {
+                var readBuffer = Data(capacity: readCapacity)
+                do {
+                    guard try self.socket.read(into: &readBuffer) > 0 else { break }
+                    guard let s = String(bytes: readBuffer, encoding: .utf8) else { return }
+                    try self.router.appendToRequest(s)
+                    print("Read value '\(s)' Request is now '\(self.router.request)' Router is finished: \(self.router.finished)")
+                    if self.router.finished {
+                        self.handler = self.router.buildHandler(delegate: self)
+                        self.handler?.start()
+                    }
                 }
+                catch let error as Router.RequestError {
+                    self.handler = ErrorHandler(request: self.router.request, delegate: self, error: error)
+                    self.handler?.start()
+                }
+                catch { return assertionFailure("Unhandled error reading from client: \(error)") }
             }
-            
-            self.handler = self.router.buildHandler(delegate: self)
-            self.handler?.start()
-        case Stream.Event.hasSpaceAvailable:
-            print("Read stream has space ?!?!?")
-        case Stream.Event.errorOccurred:
-            print("Read stream error occurred")
-        case Stream.Event.endEncountered:
-            print("Read stream end encountered")
-        default:
-            print("Read stream unknown event code: \(eventCode)")
         }
     }
     
-    func handleWriteStream(_ stream: Stream, handle eventCode: Stream.Event) {
-        switch eventCode {
-        case Stream.Event.openCompleted:
-            print("Finished opening write stream")
-        case Stream.Event.hasBytesAvailable:
-            print("Write stream has bytes available ?!?!")
-        case Stream.Event.hasSpaceAvailable:
-            print("Write stream has space")
-        case Stream.Event.errorOccurred:
-            print("Write stream error occurred")
-        case Stream.Event.endEncountered:
-            print("Write stream end encountered")
-        default:
-            print("Write stream unknown event code: \(eventCode)")
-        }
+    deinit {
+        print("Deinit connection with handle \(socket.socketfd)")
+        socket.close()
     }
 }
 
 extension Connection: HandlerDelegate {
-    func handlerHasData(_ data: Data) -> Int {
+    func handlerHasData(_ data: Data, completion: @escaping (Int) -> Void) {
+        print("handlerHasData called with '\(String(bytes: data, encoding: .utf8) ?? "<arg not encodable to string>")'")
         let chunkSize = self.configuration.writeChunkBytes ?? Connection.defaultWriteChunkSize
-        let buff = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: chunkSize)
-        let chunk = data[0..<min(data.underestimatedCount, chunkSize - 1)]
-        let (_, endIndex) = buff.initialize(from: chunk)
-        guard let p = buff.baseAddress else { return 0 }
-        self.writeStream.write(p, maxLength: endIndex)
-        return endIndex
+        connectionQueue.async { [unowned self] in
+            var regionStart = 0
+            while self.stopped == false {
+                let writtenDataSize = min(data.underestimatedCount - regionStart, chunkSize - 1)
+                guard writtenDataSize > 0 else { break }
+                let thisChunk = data[regionStart..<(regionStart + writtenDataSize)]
+                do { try self.socket.write(from: thisChunk) }
+                catch {
+                    print("Error writing '\(String(bytes: thisChunk, encoding: .utf8) ?? "<chunk not encodable to string>")' to socket: \(error)")
+                    completion(-1)
+                }
+                regionStart = regionStart + writtenDataSize
+            }
+            print("Completed writing out handler data")
+            completion(regionStart)
+        }
     }
     
     func complete() {
-        self.close()
+        print("Handler for connection with handle \(socket.socketfd) is complete")
+        stopped = true
+        handler = nil
+        delegate?.finished(sender: self)
     }
 }

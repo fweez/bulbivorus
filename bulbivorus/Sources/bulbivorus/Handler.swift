@@ -9,8 +9,8 @@
 import Foundation
 
 protocol HandlerDelegate {
-    /// Takes data, tries to write some of it out, returns the length written
-    func handlerHasData(_ data: Data) -> Int
+    /// Takes data, tries to write it out, runs callback when complete
+    func handlerHasData(_ data: Data, completion: @escaping (Int) -> Void)
     /// Signals the delegate that we're done here
     func complete()
 }
@@ -22,15 +22,26 @@ protocol Handler {
     func start() -> Void
     
     func sendString(_ s: String) -> Void
+    func sendData(_ d: Data) -> Void
 }
 
 extension Handler {
     func sendString(_ s: String) {
-        var output = s + "\r\n\r\n.\r\n"
-        var outputData = Data(output.utf8)
-        while outputData.count > 0 {
-            let len = self.delegate.handlerHasData(outputData)
-            outputData.removeSubrange(0..<len)
+        let output = s + "\r\n\r\n.\r\n"
+        let outputData = Data(output.utf8)
+        sendData(outputData)
+    }
+    
+    func sendData(_ d: Data) {
+        delegate.handlerHasData(d) { bytesWritten in
+            guard bytesWritten > 0 else {
+                return self.delegate.complete()
+            }
+            let nextData = d[bytesWritten...]
+            guard nextData.count > 0 else {
+                return self.delegate.complete()
+            }
+            self.sendData(nextData)
         }
     }
 }
@@ -41,7 +52,6 @@ struct HelloFriendHandler: Handler {
     
     func start() {
         self.sendString("Hello friend\r\n")
-        self.delegate.complete()
     }
 }
 
@@ -52,7 +62,6 @@ struct ErrorHandler: Handler {
     
     func start() {
         self.sendString("Error: \(self.error)")
-        self.delegate.complete()
     }
 }
 
@@ -73,7 +82,6 @@ struct FileHandler: Handler {
             } else {
                 try self.send(documentLocation: self.request)
             }
-            self.delegate.complete()
         } catch {
             let h = ErrorHandler(request: self.request, delegate: self.delegate, error: error)
             h.start()
