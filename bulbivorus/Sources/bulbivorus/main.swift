@@ -7,28 +7,45 @@
 //
 
 import Foundation
+import Darwin
 
-let configDirs: [URL?] = [
-    URL(fileURLWithPath: FileManager.default.currentDirectoryPath),
-    FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first,
-    FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.localDomainMask).first,
-]
-let server = Server()
-for configDir in configDirs {
-    guard let configURL = configDir?.appendingPathComponent("bulbivorus-config.json") else { continue }
-    print("Looking in \(configURL.absoluteString) for configuration")
-    guard let configData = try? Data(contentsOf: configURL) else {
-        print("Couldn't read contents of file.")
-        continue
+
+
+func loadConfig() -> ServerConfiguration? {
+    let configDirs: [URL?] = [
+        URL(fileURLWithPath: FileManager.default.currentDirectoryPath),
+        FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first,
+        FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.localDomainMask).first,
+        ]
+    for configDir in configDirs {
+        guard let configURL = configDir?.appendingPathComponent("bulbivorus-config.json") else { continue }
+        print("Looking in \(configURL.absoluteString) for configuration")
+        guard let configData = try? Data(contentsOf: configURL) else {
+            print("Couldn't read contents of file.")
+            continue
+        }
+        do {
+            let config = try JSONDecoder().decode(ServerConfiguration.self, from: configData)
+            print("Loaded config from \(configURL.absoluteString)")
+            return config
+        } catch {
+            print("Error loading config: \(error)")
+        }
     }
-    do {
-        let config = try JSONDecoder().decode(ServerConfiguration.self, from: configData)
+    return nil
+}
+
+let server = Server()
+
+signal(SIGHUP) { _ in
+    if let config = loadConfig() {
         server.configuration = config
-        print("Loaded config from \(configURL.absoluteString)")
-        break
-    } catch {
-        print("Error loading config: \(error)")
     }
 }
 
+if let config = loadConfig() {
+    server.configuration = config
+}
 server.start()
+
+

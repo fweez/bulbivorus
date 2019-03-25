@@ -23,23 +23,16 @@ class Server {
     }
     
     func start() {
-        do {
-            try listenerSocket = Socket.create(family: .inet)
-        } catch {
-            assertionFailure("Could not start listener socket: \(error)")
-            return
-        }
+        do { try listenerSocket = Socket.create(family: .inet) }
+        catch { assertionFailure("Could not start listener socket: \(error)") }
         
         guard let socket = listenerSocket else {
             assertionFailure("Socket unexpectedly nil!")
             return
         }
         
-        do {
-            try socket.listen(on: configuration.port ?? Server.defaultPort)
-        } catch {
-            assertionFailure("Socket failed while setting up listener: \(error)")
-        }
+        do { try socket.listen(on: configuration.port ?? Server.defaultPort) }
+        catch { assertionFailure("Socket failed while setting up listener: \(error)") }
         
         while self.stopped == false {
             do {
@@ -52,7 +45,6 @@ class Server {
                 print("Added connection with handle \(clientSocket.socketfd)")
             } catch {
                 assertionFailure("Failure while accepting client connection: \(error)")
-                return
             }
         }
     }
@@ -64,14 +56,11 @@ class Server {
     }
 
     func connectionFinished(socket: Socket) {
-        print("Connection with handle \(socket.socketfd) is finished")
         let fd = socket.socketfd
         socketHandlerQueue.sync { [unowned self, socket] in
-            print("Destroying connection with handle \(fd)")
             socket.close()
             self.connections[fd] = nil
             dump(self.connections)
         }
-        dump(self.connections)
     }
 }
