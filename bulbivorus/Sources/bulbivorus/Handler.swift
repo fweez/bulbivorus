@@ -8,18 +8,13 @@
 
 import Foundation
 
-protocol HandlerDelegate {
-    /// Takes data, tries to write it out, runs callback when complete
-    func handlerHasData(_ data: Data, completion: @escaping (Int) -> Void)
-    /// Signals the delegate that we're done here
-    func complete()
-}
+typealias HandlerDataHandler = (Data, @escaping (Int) -> Void) -> Void
+typealias HandlerCompletion = () -> Void
 
 protocol Handler {
     var request: String { get }
-    var delegate: HandlerDelegate { get }
-    
-    func start() -> Void
+    var dataHandler: HandlerDataHandler { get }
+    var handlerCompletion: HandlerCompletion { get }
     
     func sendString(_ s: String) -> Void
     func sendData(_ d: Data) -> Void
@@ -33,13 +28,13 @@ extension Handler {
     }
     
     func sendData(_ d: Data) {
-        delegate.handlerHasData(d) { bytesWritten in
+        dataHandler(d) { bytesWritten in
             guard bytesWritten > 0 else {
-                return self.delegate.complete()
+                return self.handlerCompletion()
             }
             let nextData = d[bytesWritten...]
             guard nextData.count > 0 else {
-                return self.delegate.complete()
+                return self.handlerCompletion()
             }
             self.sendData(nextData)
         }
@@ -48,19 +43,28 @@ extension Handler {
 
 struct HelloFriendHandler: Handler {
     let request: String
-    let delegate: HandlerDelegate
-    
-    func start() {
+    let dataHandler: HandlerDataHandler
+    let handlerCompletion: HandlerCompletion
+
+    init(request: String, dataHandler: @escaping HandlerDataHandler, handlerCompletion: @escaping HandlerCompletion) {
+        self.request = request
+        self.dataHandler = dataHandler
+        self.handlerCompletion = handlerCompletion
         self.sendString("Hello friend\r\n")
     }
 }
 
 struct ErrorHandler: Handler {
     let request: String
-    let delegate: HandlerDelegate
+    var dataHandler: HandlerDataHandler
+    var handlerCompletion: HandlerCompletion
     let error: Error
     
-    func start() {
+    init(request: String, error: Error, dataHandler: @escaping HandlerDataHandler, handlerCompletion: @escaping HandlerCompletion) {
+        self.request = request
+        self.dataHandler = dataHandler
+        self.handlerCompletion = handlerCompletion
+        self.error = error
         self.sendString("Error: \(self.error)")
     }
 }
@@ -72,19 +76,24 @@ enum FileHandlerError: Error {
 
 struct FileHandler: Handler {
     let request: String
-    let delegate: HandlerDelegate
+    var dataHandler: HandlerDataHandler
+    var handlerCompletion: HandlerCompletion
     let configuration: FileHandlerConfiguration
     
-    func start() {
+    init(request: String, configuration: FileHandlerConfiguration, dataHandler: @escaping HandlerDataHandler, handlerCompletion: @escaping HandlerCompletion) {
+        self.request = request
+        self.configuration = configuration
+        self.dataHandler = dataHandler
+        self.handlerCompletion = handlerCompletion
+        
         do {
-            if self.request.suffix(1) == "/" || self.request == "" {
-                try self.sendList()
+            if request.suffix(1) == "/" || request == "" {
+                try sendList()
             } else {
-                try self.send(documentLocation: self.request)
+                try send(documentLocation: self.request)
             }
         } catch {
-            let h = ErrorHandler(request: self.request, delegate: self.delegate, error: error)
-            h.start()
+            let _ = ErrorHandler(request: self.request, error: error, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
         }
     }
     

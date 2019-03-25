@@ -10,12 +10,16 @@ import Foundation
 
 struct Router {
     let configuration: RouterConfiguration
-    var request: String = ""
-
-    static var maxRequestLength = 1024
+    var dataHandler: HandlerDataHandler? = nil
+    var handlerCompletion: HandlerCompletion? = nil
+    var request: String
+    
     init(configuration: RouterConfiguration) {
         self.configuration = configuration
+        self.request = ""
     }
+
+    static var maxRequestLength = 1024
     
     enum RequestError: Error {
         case requestTooLong
@@ -25,22 +29,27 @@ struct Router {
     }
     
     mutating func appendToRequest(_ s: String) throws {
-        let maxReqLen = self.configuration.maxRequestLength ?? Router.maxRequestLength
-        guard self.request.count + s.count <= maxReqLen else  {
+        let maxReqLen = configuration.maxRequestLength ?? Router.maxRequestLength
+        guard request.count + s.count <= maxReqLen else  {
             throw Router.RequestError.requestTooLong
         }
-        self.request.append(s)
+        request.append(s)
     }
     
     var finished: Bool {
-        let maxReqLen = self.configuration.maxRequestLength ?? Router.maxRequestLength
-        guard self.request.count < maxReqLen else { return false }
-        return self.request.hasSuffix("\r\n")
+        let maxReqLen = configuration.maxRequestLength ?? Router.maxRequestLength
+        guard request.count < maxReqLen else { return false }
+        return request.hasSuffix("\r\n")
     }
     
-    func buildHandler(delegate: HandlerDelegate) -> Handler  {
-        guard self.finished else {
-            return ErrorHandler(request: self.request, delegate: delegate, error: Router.RequestError.requestNotFinished)
+    func buildHandler() -> Handler  {
+        guard let dataHandler = dataHandler, let handlerCompletion = handlerCompletion else {
+            assertionFailure("Tried to build handler before data handler and completion set")
+            return ErrorHandler(request: request, error: Router.RequestError.requestNotFinished, dataHandler: { (_,_) in return }, handlerCompletion: { })
+        }
+        
+        guard finished else {
+            return ErrorHandler(request: request, error: Router.RequestError.requestNotFinished, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
         }
         
         let trimmedRequest = self.request.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -49,15 +58,15 @@ struct Router {
             guard let range = trimmedRequest.range(of: route.requestMatch, options: .regularExpression), range.lowerBound == trimmedRequest.startIndex, range.upperBound == trimmedRequest.endIndex else { continue }
             
             switch route.kind {
-            case .helloFriend: return HelloFriendHandler(request: trimmedRequest, delegate: delegate)
+            case .helloFriend: return HelloFriendHandler(request: trimmedRequest, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
             case .file:
                 guard let cast = route.handlerConfiguration as? FileHandlerConfiguration?, let config = cast else {
-                    return ErrorHandler(request: self.request, delegate: delegate, error: Router.RequestError.configurationError)
+                    return ErrorHandler(request: self.request, error: Router.RequestError.configurationError, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
                 }
-                return FileHandler(request: trimmedRequest, delegate: delegate, configuration: config)
+                return FileHandler(request: trimmedRequest, configuration: config, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
             }
         }
         
-        return ErrorHandler(request: self.request, delegate: delegate, error: Router.RequestError.noRouteForRequest)
+        return ErrorHandler(request: self.request, error: Router.RequestError.noRouteForRequest, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
     }
 }
