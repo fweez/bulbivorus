@@ -7,9 +7,7 @@
 //
 
 import Foundation
-import Darwin
-
-
+import Signals
 
 func loadConfig() -> ServerConfiguration? {
     let configDirs: [URL?] = [
@@ -37,7 +35,7 @@ func loadConfig() -> ServerConfiguration? {
 
 let server = Server()
 
-signal(SIGHUP) { _ in
+Signals.trap(signal: .hup) { _ in
     if let config = loadConfig() {
         server.configuration = config
     }

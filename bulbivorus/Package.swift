@@ -13,12 +13,13 @@ let package = Package(
 
     dependencies: [
         .package(url: "https://github.com/IBM-Swift/BlueSocket.git", from:"1.0.8"),
+        .package(url: "https://github.com/IBM-Swift/BlueSignals.git", from:"1.0.17"),
     ],
 
     targets: [
         .target(name: "bulbivorus", 
                 dependencies: [
-                    "Socket",
+                    "Socket", "Signals"
                 ])
     ]
 )
