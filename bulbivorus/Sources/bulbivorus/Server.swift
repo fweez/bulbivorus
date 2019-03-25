@@ -44,7 +44,7 @@ class Server {
         while self.stopped == false {
             do {
                 let clientSocket = try socket.acceptClientConnection()
-                let newConnection = Connection(clientSocket, configuration: self.configuration.connectionConfiguration, delegate: self)
+                let newConnection = Connection(clientSocket, configuration: self.configuration.connectionConfiguration, connectionCompletion: connectionFinished)
                 socketHandlerQueue.sync { [unowned self, clientSocket] in
                     self.connections[clientSocket.socketfd] = newConnection
                 }
@@ -62,15 +62,13 @@ class Server {
             self.connections = [:]
         }
     }
-}
 
-extension Server: ConnectionDelegate {
-    func finished(sender: Connection) {
-        print("Connection with handle \(sender.socket.socketfd) is finished")
-        let fd = sender.socket.socketfd
-        socketHandlerQueue.sync { [unowned self, sender] in
+    func connectionFinished(socket: Socket) {
+        print("Connection with handle \(socket.socketfd) is finished")
+        let fd = socket.socketfd
+        socketHandlerQueue.sync { [unowned self, socket] in
             print("Destroying connection with handle \(fd)")
-            sender.socket.close()
+            socket.close()
             self.connections[fd] = nil
             dump(self.connections)
         }

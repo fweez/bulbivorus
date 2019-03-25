@@ -58,12 +58,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "bulbivorus/Sources/bulbivorus/Server.swift"
-            timestampString = "575229940.103073"
+            timestampString = "575230549.0422291"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "74"
-            endingLineNumber = "74"
-            landmarkName = "finished(sender:)"
+            startingLineNumber = "72"
+            endingLineNumber = "72"
+            landmarkName = "connectionFinished(socket:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

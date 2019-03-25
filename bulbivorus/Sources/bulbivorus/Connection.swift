@@ -9,16 +9,12 @@
 import Foundation
 import Socket
 
-protocol ConnectionDelegate {
-    func finished(sender: Connection) -> Void
-}
-
 class Connection {
     static let connectionQueue = DispatchQueue.global(qos: .userInteractive)
     let connectionQueue: DispatchQueue
     var configuration: ConnectionConfiguration
+    let completion: (Socket) -> Void
     
-    var delegate: ConnectionDelegate?
     var socket: Socket
     var router: Router
     var handler: Handler?
@@ -28,40 +24,43 @@ class Connection {
     static var defaultReadChunkSize = 512
     static var defaultWriteChunkSize = 512
     
-    init(_ clientSocket: Socket, configuration: ConnectionConfiguration, delegate: ConnectionDelegate) {
+    init(_ clientSocket: Socket, configuration: ConnectionConfiguration, connectionCompletion: @escaping (Socket) -> Void) {
         socket = clientSocket
         self.configuration = configuration
-        self.delegate = delegate
+        self.completion = connectionCompletion
+        
         connectionQueue = DispatchQueue(label: "com.rmf.bulbivorus.connectionQueue.\(socket.socketfd)", target: Connection.connectionQueue)
         router = Router(configuration: configuration.routerConfiguration)
-        
-        router.dataHandler = { [unowned self] (data: Data, completion: @escaping (Int) -> Void) in
-            print("handlerHasData called with '\(String(bytes: data, encoding: .utf8) ?? "<arg not encodable to string>")'")
-            let chunkSize = self.configuration.writeChunkBytes ?? Connection.defaultWriteChunkSize
-            self.connectionQueue.async { [unowned self] in
-                var regionStart = 0
-                while self.stopped == false {
-                    let writtenDataSize = min(data.underestimatedCount - regionStart, chunkSize - 1)
-                    guard writtenDataSize > 0 else { break }
-                    let thisChunk = data[regionStart..<(regionStart + writtenDataSize)]
-                    do { try self.socket.write(from: thisChunk) }
-                    catch {
-                        print("Error writing '\(String(bytes: thisChunk, encoding: .utf8) ?? "<chunk not encodable to string>")' to socket: \(error)")
-                        completion(-1)
-                    }
-                    regionStart = regionStart + writtenDataSize
+        router.dataHandler = writeDataToSocket
+        router.handlerCompletion = handlerComplete
+    }
+    
+    func writeDataToSocket(data: Data, completion: @escaping (Int) -> Void) -> Void {
+        print("handlerHasData called with '\(String(bytes: data, encoding: .utf8) ?? "<arg not encodable to string>")'")
+        let chunkSize = self.configuration.writeChunkBytes ?? Connection.defaultWriteChunkSize
+        self.connectionQueue.async { [unowned self] in
+            var regionStart = 0
+            while self.stopped == false {
+                let writtenDataSize = min(data.underestimatedCount - regionStart, chunkSize - 1)
+                guard writtenDataSize > 0 else { break }
+                let thisChunk = data[regionStart..<(regionStart + writtenDataSize)]
+                do { try self.socket.write(from: thisChunk) }
+                catch {
+                    print("Error writing '\(String(bytes: thisChunk, encoding: .utf8) ?? "<chunk not encodable to string>")' to socket: \(error)")
+                    completion(-1)
                 }
-                print("Completed writing out handler data")
-                completion(regionStart)
+                regionStart = regionStart + writtenDataSize
             }
+            print("Completed writing out handler data")
+            completion(regionStart)
         }
-        router.handlerCompletion = { [unowned self] in
-            print("Handler for connection with handle \(self.socket.socketfd) is complete")
-            self.stopped = true
-            self.handler = nil
-            self.delegate?.finished(sender: self)
-        }
-        
+    }
+    
+    func handlerComplete() -> Void {
+        print("Handler for connection with handle \(self.socket.socketfd) is complete")
+        self.stopped = true
+        self.handler = nil
+        self.completion(self.socket)
     }
     
     func start() {
