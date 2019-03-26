@@ -9,20 +9,24 @@
 import Foundation
 import Socket
 
-class Server {
+public class Server {
     static var defaultPort = 70
     
     let socketHandlerQueue = DispatchQueue.global(qos: .userInteractive)
     var listenerSocket: Socket? = nil
     var connections: [Int32: Connection] = [:]
-    var configuration: ServerConfiguration = try! ServerConfiguration()
+    public var configuration: ServerConfiguration = try! ServerConfiguration()
     var stopped = false
+    
+    public init() {
+        
+    }
     
     deinit {
         shutdownConnections()
     }
     
-    func start() {
+    public func start() {
         do { try listenerSocket = Socket.create(family: .inet) }
         catch { assertionFailure("Could not start listener socket: \(error)") }
         

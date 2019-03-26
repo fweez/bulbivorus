@@ -1,4 +1,4 @@
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 //
 //  Package.swift
 //  bulbivorus
@@ -17,9 +17,14 @@ let package = Package(
     ],
 
     targets: [
-        .target(name: "bulbivorus", 
-                dependencies: [
-                    "Socket", "Signals"
-                ])
+        .target(
+            name: "bulbivorus",
+            dependencies: ["bulbivorusCore", "Signals"]),
+        .target(
+            name: "bulbivorusCore",
+            dependencies:["Socket"]),
+        .testTarget(
+            name: "bulbivorusTests",
+            dependencies: ["bulbivorusCore"])
     ]
 )

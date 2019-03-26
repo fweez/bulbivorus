@@ -8,8 +8,9 @@
 
 import Foundation
 import Signals
+import bulbivorusCore
 
-func loadConfig() -> ServerConfiguration? {
+func loadConfig() -> bulbivorusCore.ServerConfiguration? {
     let configDirs: [URL?] = [
         URL(fileURLWithPath: FileManager.default.currentDirectoryPath),
         FileManager.default.urls(for: FileManager.SearchPathDirectory.applicationSupportDirectory, in: FileManager.SearchPathDomainMask.userDomainMask).first,

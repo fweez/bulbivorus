@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct ServerConfiguration {
+public struct ServerConfiguration {
     /// What port to run the server on. Gopher default is 70.
     let port: Int? = nil
     
@@ -32,7 +32,7 @@ extension ServerConfiguration: Codable {
     }
 }
 
-struct ConnectionConfiguration {
+public struct ConnectionConfiguration {
     /// Size of the read buffer, in bytes
     let readChunkBytes: Int?
     /// Size of the write buffer, in bytes
@@ -49,7 +49,7 @@ extension ConnectionConfiguration: Codable {
     }
 }
 
-struct RouterConfiguration: Codable {
+public struct RouterConfiguration: Codable {
     /// Maximum length of requests, in characters
     let maxRequestLength: Int?
     
@@ -75,7 +75,7 @@ enum HandlerKind: String, Codable {
     case file
 }
 
-struct Route {
+public struct Route {
     /// The handler to use for this route
     let kind: HandlerKind
     /// A regex to use to match request paths
@@ -89,7 +89,7 @@ extension Route: Decodable {
         case kind, requestMatch, handlerConfiguration
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         kind = try values.decode(HandlerKind.self, forKey: .kind)
         requestMatch = try values.decode(String.self, forKey: .requestMatch)
@@ -101,7 +101,7 @@ extension Route: Decodable {
 }
 
 extension Route: Encodable {
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: Route.CodingKeys.self)
         try container.encode(kind, forKey: .kind)
         try container.encode(requestMatch, forKey: .requestMatch)
@@ -115,7 +115,7 @@ extension Route: Encodable {
     }
 }
 
-struct FileHandlerConfiguration: Codable {
+public struct FileHandlerConfiguration: Codable {
     /// Root of a directory to serve with a FileHandler
     let root: String
 }
