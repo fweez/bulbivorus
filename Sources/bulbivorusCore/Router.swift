@@ -23,6 +23,7 @@ struct Router {
     
     enum RequestError: Error {
         case requestTooLong
+        case requestCouldNotBeDecoded
         case requestNotFinished
         case noRouteForRequest
         case configurationError
@@ -63,7 +64,11 @@ struct Router {
                 guard let cast = route.handlerConfiguration as? FileHandlerConfiguration?, let config = cast else {
                     return ErrorHandler(request: self.request, error: Router.RequestError.configurationError, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
                 }
-                return FileHandler(request: trimmedRequest, configuration: config, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
+                do {
+                    return try FileHandler(request: trimmedRequest, configuration: config, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
+                } catch {
+                    return ErrorHandler(request: self.request, error: error, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
+                }
             }
         }
         

@@ -69,31 +69,27 @@ struct ErrorHandler: Handler {
     }
 }
 
-enum FileHandlerError: Error {
-    case fileDoesNotExist
-    case couldNotListDirectory
-}
-
 struct FileHandler: Handler {
     let request: String
     var dataHandler: HandlerDataHandler
     var handlerCompletion: HandlerCompletion
     let configuration: FileHandlerConfiguration
     
-    init(request: String, configuration: FileHandlerConfiguration, dataHandler: @escaping HandlerDataHandler, handlerCompletion: @escaping HandlerCompletion) {
+    enum FileError: Error {
+        case fileDoesNotExist
+        case couldNotListDirectory
+    }
+    
+    init(request: String, configuration: FileHandlerConfiguration, dataHandler: @escaping HandlerDataHandler, handlerCompletion: @escaping HandlerCompletion) throws {
         self.request = request
         self.configuration = configuration
         self.dataHandler = dataHandler
         self.handlerCompletion = handlerCompletion
         
-        do {
-            if request.suffix(1) == "/" || request == "" {
-                try sendList()
-            } else {
-                try send(documentLocation: self.request)
-            }
-        } catch {
-            let _ = ErrorHandler(request: self.request, error: error, dataHandler: dataHandler, handlerCompletion: handlerCompletion)
+        if request.suffix(1) == "/" || request == "" {
+            try sendList()
+        } else {
+            try send(documentLocation: self.request)
         }
     }
     
@@ -101,9 +97,9 @@ struct FileHandler: Handler {
         let mapLocation = self.request + "gophermap"
         do {
             try self.send(documentLocation: mapLocation)
-        } catch FileHandlerError.fileDoesNotExist {
+        } catch FileHandler.FileError.fileDoesNotExist {
             self.sendString("TODO: directory listings")
-            throw FileHandlerError.couldNotListDirectory
+            throw FileHandler.FileError.couldNotListDirectory
         }
     }
     
@@ -114,7 +110,7 @@ struct FileHandler: Handler {
         }
         let path = root + documentLocation
         guard FileManager.default.isReadableFile(atPath: path) else {
-            throw FileHandlerError.fileDoesNotExist
+            throw FileHandler.FileError.fileDoesNotExist
         }
         let s = try String(contentsOfFile: path)
         self.sendString(s)

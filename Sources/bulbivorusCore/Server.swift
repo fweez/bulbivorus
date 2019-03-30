@@ -46,7 +46,6 @@ public class Server {
                     self.connections[clientSocket.socketfd] = newConnection
                 }
                 newConnection.start()
-                print("Added connection with handle \(clientSocket.socketfd)")
             } catch {
                 assertionFailure("Failure while accepting client connection: \(error)")
             }
@@ -59,7 +58,7 @@ public class Server {
         }
     }
 
-    func connectionFinished(socket: Socket) {
+    func connectionFinished(socket: ReaderWriter) {
         let fd = socket.socketfd
         socketHandlerQueue.sync { [unowned self, socket] in
             socket.close()

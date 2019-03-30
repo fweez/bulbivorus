@@ -13,9 +13,9 @@ class Connection {
     static let connectionQueue = DispatchQueue.global(qos: .userInteractive)
     let connectionQueue: DispatchQueue
     var configuration: ConnectionConfiguration
-    let completion: (Socket) -> Void
+    let completion: (ReaderWriter) -> Void
     
-    var socket: Socket
+    var socket: ReaderWriter
     var router: Router
     var handler: Handler?
     
@@ -24,7 +24,7 @@ class Connection {
     static var defaultReadChunkSize = 512
     static var defaultWriteChunkSize = 512
     
-    init(_ clientSocket: Socket, configuration: ConnectionConfiguration, connectionCompletion: @escaping (Socket) -> Void) {
+    init(_ clientSocket: ReaderWriter, configuration: ConnectionConfiguration, connectionCompletion: @escaping (ReaderWriter) -> Void) {
         socket = clientSocket
         self.configuration = configuration
         self.completion = connectionCompletion
@@ -36,7 +36,6 @@ class Connection {
     }
     
     func writeDataToSocket(data: Data, completion: @escaping (Int) -> Void) -> Void {
-        print("handlerHasData called with '\(String(bytes: data, encoding: .utf8) ?? "<arg not encodable to string>")'")
         let chunkSize = self.configuration.writeChunkBytes ?? Connection.defaultWriteChunkSize
         self.connectionQueue.async { [unowned self] in
             var regionStart = 0
@@ -44,20 +43,20 @@ class Connection {
                 let writtenDataSize = min(data.underestimatedCount - regionStart, chunkSize - 1)
                 guard writtenDataSize > 0 else { break }
                 let thisChunk = data[regionStart..<(regionStart + writtenDataSize)]
-                do { try self.socket.write(from: thisChunk) }
+                do {
+                    let actualWriteSize = try self.socket.write(from: thisChunk)
+                    regionStart = regionStart + actualWriteSize
+                }
                 catch {
-                    print("Error writing '\(String(bytes: thisChunk, encoding: .utf8) ?? "<chunk not encodable to string>")' to socket: \(error)")
                     completion(-1)
                 }
-                regionStart = regionStart + writtenDataSize
+                
             }
-            print("Completed writing out handler data")
             completion(regionStart)
         }
     }
     
     func handlerComplete() -> Void {
-        print("Handler for connection with handle \(self.socket.socketfd) is complete")
         self.stopped = true
         self.handler = nil
         self.completion(self.socket)
@@ -70,10 +69,10 @@ class Connection {
             while self.handler == nil && self.stopped == false {
                 var readBuffer = Data(capacity: readCapacity)
                 do {
-                    guard try self.socket.read(into: &readBuffer) > 0 else { break }
-                    guard let s = String(bytes: readBuffer, encoding: .utf8) else { return }
+                    let len = try self.socket.read(into: &readBuffer)
+                    guard len > 0 else { break }
+                    guard let s = String(bytes: readBuffer, encoding: .utf8) else { throw Router.RequestError.requestCouldNotBeDecoded }
                     try self.router.appendToRequest(s)
-                    print("Read value '\(s)' Request is now '\(self.router.request)' Router is finished: \(self.router.finished)")
                     if self.router.finished {
                         self.handler = self.router.buildHandler()
                     }
@@ -89,7 +88,6 @@ class Connection {
     }
     
     deinit {
-        print("Deinit connection with handle \(socket.socketfd)")
         socket.close()
     }
 }
