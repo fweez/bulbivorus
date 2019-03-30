@@ -8,7 +8,7 @@
 
 import Foundation
 
-typealias HandlerDataHandler = (Data, @escaping (Int) -> Void) -> Void
+typealias HandlerDataHandler = (_ writeData: Data, _ writeComplete: @escaping (Int) -> Void) -> Void
 typealias HandlerCompletion = () -> Void
 
 protocol Handler {

@@ -24,6 +24,7 @@
 		944A130D224DC72B00DA2537 /* ConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944A130C224DC72B00DA2537 /* ConnectionTests.swift */; };
 		944A130F224DCA2600DA2537 /* Socket+ReaderWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944A130E224DCA2600DA2537 /* Socket+ReaderWriter.swift */; };
 		944A1312224EE82000DA2537 /* RouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944A1311224EE82000DA2537 /* RouterTests.swift */; };
+		944A13152250056400DA2537 /* HandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944A13142250056400DA2537 /* HandlerTests.swift */; };
 		OBJ_110 /* XCTestManifests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* XCTestManifests.swift */; };
 		OBJ_114 /* bulbivorusCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "bulbivorus::bulbivorusCore::Product" /* bulbivorusCore.framework */; };
 		OBJ_115 /* Socket.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "Socket::Socket::Product" /* Socket.framework */; };
@@ -103,6 +104,7 @@
 		944A130E224DCA2600DA2537 /* Socket+ReaderWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Socket+ReaderWriter.swift"; sourceTree = "<group>"; };
 		944A1311224EE82000DA2537 /* RouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouterTests.swift; sourceTree = "<group>"; };
 		944A1313224FFC3700DA2537 /* bulbivorus.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = bulbivorus.playground; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		944A13142250056400DA2537 /* HandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandlerTests.swift; sourceTree = "<group>"; };
 		OBJ_11 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		OBJ_12 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
 		OBJ_13 /* Handler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Handler.swift; sourceTree = "<group>"; };
@@ -199,6 +201,7 @@
 				OBJ_18 /* XCTestManifests.swift */,
 				944A130C224DC72B00DA2537 /* ConnectionTests.swift */,
 				944A1311224EE82000DA2537 /* RouterTests.swift */,
+				944A13142250056400DA2537 /* HandlerTests.swift */,
 			);
 			name = bulbivorusTests;
 			path = Tests/bulbivorusTests;
@@ -468,6 +471,7 @@
 			files = (
 				OBJ_110 /* XCTestManifests.swift in Sources */,
 				944A1312224EE82000DA2537 /* RouterTests.swift in Sources */,
+				944A13152250056400DA2537 /* HandlerTests.swift in Sources */,
 				944A130D224DC72B00DA2537 /* ConnectionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

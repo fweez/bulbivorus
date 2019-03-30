@@ -13,7 +13,7 @@ class Connection {
     static let connectionQueue = DispatchQueue.global(qos: .userInteractive)
     let connectionQueue: DispatchQueue
     var configuration: ConnectionConfiguration
-    let completion: (ReaderWriter) -> Void
+    let completion: (_ finishedSocket: ReaderWriter) -> Void
     
     var socket: ReaderWriter
     var router: Router
@@ -35,7 +35,7 @@ class Connection {
         router.handlerCompletion = handlerComplete
     }
     
-    func writeDataToSocket(data: Data, completion: @escaping (Int) -> Void) -> Void {
+    func writeDataToSocket(data: Data, writeCompletion: @escaping (Int) -> Void) -> Void {
         let chunkSize = self.configuration.writeChunkBytes ?? Connection.defaultWriteChunkSize
         self.connectionQueue.async { [unowned self] in
             var regionStart = 0
@@ -48,11 +48,11 @@ class Connection {
                     regionStart = regionStart + actualWriteSize
                 }
                 catch {
-                    completion(-1)
+                    writeCompletion(-1)
                 }
                 
             }
-            completion(regionStart)
+            writeCompletion(regionStart)
         }
     }
     

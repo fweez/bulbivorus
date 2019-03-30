@@ -58,10 +58,10 @@ public class Server {
         }
     }
 
-    func connectionFinished(socket: ReaderWriter) {
-        let fd = socket.socketfd
-        socketHandlerQueue.sync { [unowned self, socket] in
-            socket.close()
+    func connectionFinished(finishedSocket: ReaderWriter) {
+        let fd = finishedSocket.socketfd
+        socketHandlerQueue.sync { [unowned self, finishedSocket] in
+            finishedSocket.close()
             self.connections[fd] = nil
             dump(self.connections)
         }
