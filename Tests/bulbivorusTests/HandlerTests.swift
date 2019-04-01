@@ -17,7 +17,7 @@ class HandlerTests: XCTestCase {
     }
 
     override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        //removeTestGopherhole()
     }
     
     func buildDataHandlerAndExpectation() -> (HandlerDataHandler, XCTestExpectation) {
@@ -72,5 +72,75 @@ class HandlerTests: XCTestCase {
             }
             XCTAssert(fherr == FileHandler.FileError.fileDoesNotExist, "Error should have been file does not exist")
         }
+    }
+    
+    func createDir(_ path: String) {
+        guard FileManager.default.fileExists(atPath: path) == false else { return }
+        do {
+            try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            XCTFail("Unexpected error while creating test directory at \(path): \(error)")
+        }
+    }
+    
+    func createFile(contents: String, path: String) {
+        guard FileManager.default.fileExists(atPath: path) == false else { return }
+        do {
+            try contents.write(toFile: path, atomically: true, encoding: .utf8)
+        } catch {
+            XCTFail("Unexpected error while creating file at \(path): \(error)")
+        }
+    }
+    
+    let testRootDir = "/tmp/bulbivorus-test-root"
+
+    /// Creates a directory structure and test files in a gopherhole
+    /// In /tmp/bulbivorus-test-root/:
+        /// ./gophermap -- two line gophermap
+        /// ./no-gophermap/ -- a subdirectory with no gophermap
+        /// ./no-gophermap/test.txt -- just some text
+        /// ./with-gophermap/ -- a subdir with a gophermap
+        /// ./with-gophermap/gophermap -- a one line gophermap
+    func createTestGopherhole() {
+        removeTestGopherhole()
+        createDir(testRootDir)
+        
+        let rootMap = """
+        iThis is the root of the test gopherhole
+        1Generated Gophermap\tno-gophermap
+        1Composed Gopheramp\twith-gophermap
+        """
+        let rootMapPath = testRootDir + "/gophermap"
+        createFile(contents: rootMap, path: rootMapPath)
+        
+        let noMapDir = testRootDir + "/no-gophermap"
+        createDir(noMapDir)
+        
+        let noMapFile = "Here is a test file"
+        let noMapFilePath = noMapDir + "/test.txt"
+        createFile(contents: noMapFile, path: noMapFilePath)
+        
+        let mapDir = testRootDir + "/with-gophermap"
+        createDir(mapDir)
+        
+        let mapDirMap = """
+        iThis is a subdir in the test gopherhole
+        """
+        let mapDirMapPath = mapDir + "/gophermap"
+        createFile(contents: mapDirMap, path: mapDirMapPath)
+    }
+    
+    func removeTestGopherhole() {
+        guard FileManager.default.fileExists(atPath: testRootDir) else { return }
+        do {
+            try FileManager.default.removeItem(atPath: testRootDir)
+        } catch {
+            XCTFail("Unexpected error while removing test gopherhole at \(testRootDir): \(error)")
+        }
+    }
+    
+    func testFileHandlerSendsRootGophermap() {
+        createTestGopherhole()
+        //TODO
     }
 }
