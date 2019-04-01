@@ -9,6 +9,17 @@ import XCTest
 @testable import bulbivorusCore
 
 class RouterTests: XCTestCase {
+    static var allTests = [
+        ("testShortRequest", testShortRequest),
+        ("testMultipleAppends", testMultipleAppends),
+        ("testRequestTooLongSingleAppend", testRequestTooLongSingleAppend),
+        ("testRequestTooLongMultipleAppend", testRequestTooLongMultipleAppend),
+        ("testFinished", testFinished),
+        ("testHandlerGenerates", testHandlerGenerates),
+        ("testRouteErrorHandler", testRouteErrorHandler),
+        ("testRegexRoutes", testRegexRoutes),
+        ("testSeveralRoutes", testSeveralRoutes),
+        ]
     func testShortRequest() {
         let cfg = RouterConfiguration(maxRequestLength: 20, routes: [])
         var r = Router(configuration: cfg)

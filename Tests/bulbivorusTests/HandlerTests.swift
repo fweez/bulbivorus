@@ -9,6 +9,12 @@ import XCTest
 @testable import bulbivorusCore
 
 class HandlerTests: XCTestCase {
+    static var allTests = [
+        ("testErrorHandler", testErrorHandler),
+        ("testFileHandlerThrowsCouldNotList", testFileHandlerThrowsCouldNotList),
+        ("testFileHandlerThrowsFileDNE", testFileHandlerThrowsFileDNE),
+        ("testFileHandlerSendsRootGophermap", testFileHandlerSendsRootGophermap),
+    ]
     enum HandlerTestsError: Error {
         case testError
     }

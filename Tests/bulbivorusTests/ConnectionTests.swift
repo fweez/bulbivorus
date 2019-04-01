@@ -51,6 +51,16 @@ class TestSocket: bulbivorusCore.ReaderWriter {
 }
 
 class ConnectionTests: XCTestCase {
+    /// Linux `swift test` support:
+    static var allTests = [
+        ("testSimpleWrite", testSimpleWrite),
+        ("testVeryLongWrite", testVeryLongWrite),
+        ("testStopped", testStopped),
+        ("testStartWithSmallRequest", testStartWithSmallRequest),
+        ("testStartWithLargeRequest", testStartWithLargeRequest),
+        ("testHandlerComplete", testHandlerComplete),
+    ]
+
     var connection: bulbivorusCore.Connection!
     var testSocket: TestSocket!
     
@@ -81,7 +91,7 @@ class ConnectionTests: XCTestCase {
     }
 
     func testVeryLongWrite() {
-        let testData = Data(Array<uint8>(repeating: 7, count: ConnectionTests.writeChunkBytes + 1))
+        let testData = Data(Array<UInt8>(repeating: 7, count: ConnectionTests.writeChunkBytes + 1))
         let written = expectation(description: "Data was written")
         connection.writeDataToSocket(data: testData) { (count) in
             written.fulfill()
@@ -94,7 +104,7 @@ class ConnectionTests: XCTestCase {
     
     func testStopped() {
         testSocket.writeDelay = 2
-        let testData = Data(Array<uint8>(repeating: 7, count: ConnectionTests.writeChunkBytes + 1))
+        let testData = Data(Array<UInt8>(repeating: 7, count: ConnectionTests.writeChunkBytes + 1))
         let written = expectation(description: "Data was written")
         connection.writeDataToSocket(data: testData) { (count) in
             written.fulfill()
