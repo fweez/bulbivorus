@@ -52,7 +52,7 @@ public class Server {
         }
     }
     
-    func shutdownConnections() {
+    public func shutdownConnections() {
         socketHandlerQueue.sync {
             self.connections = [:]
         }

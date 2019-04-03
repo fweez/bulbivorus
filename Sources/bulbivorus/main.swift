@@ -42,6 +42,11 @@ Signals.trap(signal: .hup) { _ in
     }
 }
 
+Signals.trap(signal: .term) { _ in
+    server.shutdownConnections()
+    exit(0)
+}
+
 if let config = loadConfig() {
     server.configuration = config
 }
