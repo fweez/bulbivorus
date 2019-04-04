@@ -1,17 +1,13 @@
 {
     "port": 70,
     
-    "connection": {
-        "router": {
-            "routes": [
-                {
-                    "kind": "file",
-                    "requestMatch": ".*",
-                    "handlerConfiguration": {
-                        "root": "/Users/ryan/gopherhole"
-                    }
-                }
-            ]
+    "routes": [
+        {
+            "kind": "file",
+            "requestMatch": ".*",
+            "handlerConfiguration": {
+                "root": "/Users/ryan/gopherhole"
+            }
         }
-    }
+    ]
 }

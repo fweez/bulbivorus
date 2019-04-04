@@ -10,11 +10,12 @@ import Foundation
 
 public struct ServerConfiguration {
     /// What port to run the server on. Gopher default is 70.
-    let port: Int? = nil
+    let port: Int?
     
     let connectionConfiguration: ConnectionConfiguration
     
     init() throws {
+        port = nil
         let fhCfg = FileHandlerConfiguration(root: "/var/gopherhole")
         let routes = [
             Route(kind: .file, requestMatch: "/.*", handlerConfiguration: fhCfg),
@@ -24,10 +25,26 @@ public struct ServerConfiguration {
     }
 }
 
-extension ServerConfiguration: Codable {
+extension ServerConfiguration: Decodable {
     enum CodingKeys: String, CodingKey {
         case port
         case connectionConfiguration = "connection"
+        case readChunkBytes
+        case writeChunkBytes
+        case maxRequestLength
+        case routes
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        port = try? values.decode(Int.self, forKey: .port)
+        let readChunkBytes = try? values.decode(Int.self, forKey: .readChunkBytes)
+        let writeChunkBytes = try? values.decode(Int.self, forKey: .writeChunkBytes)
+        let maxRequestLength = try? values.decode(Int.self, forKey: .maxRequestLength)
+        let routes = try values.decode(Array<Route>.self, forKey: .routes)
+        
+        let routerCfg = RouterConfiguration(maxRequestLength: maxRequestLength, routes: routes)
+        connectionConfiguration = ConnectionConfiguration(readChunkBytes: readChunkBytes, writeChunkBytes: writeChunkBytes, routerConfiguration: routerCfg)
     }
 }
 
