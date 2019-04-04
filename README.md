@@ -1,4 +1,4 @@
-# Bulbivorus: A high-performance Gopher server written in Swift
+# Bulbivorus: A Gopher server written in Swift
 
 ## Building bulbivorus
 
