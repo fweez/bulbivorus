@@ -65,3 +65,13 @@ New to gopher? See [this excellent guide](https://davebucklin.com/play/2018/03/3
     ]
 }
 ```
+
+## Why on earth did you waste your time doing this?
+
+I wanted to learn how hard it was to do cross-platform Swift development. Turns out, it's not hard! The open source Foundation's `FileManager` is lacking a ton of features that the closed-source version has, which can be annoying. Installing the `swift` compiler into a real linux install is also absolute garbage, I cannot figure out why there isn't an official apt repository for Ubuntu.
+
+## What the heck does "bulbivorus" mean?
+
+> The camas pocket gopher (Thomomys bulbivorus), also known as the camas rat or Willamette Valley gopher, is a rodent, the largest member in the genus Thomomys, of the family Geomyidae. First described in 1829, it is endemic to the Willamette Valley of northwestern Oregon in the United States.
+
+[wikipedia](https://en.wikipedia.org/wiki/Camas_pocket_gopher)
