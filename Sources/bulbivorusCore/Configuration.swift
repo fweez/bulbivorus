@@ -15,9 +15,8 @@ public struct ServerConfiguration {
     let connectionConfiguration: ConnectionConfiguration
     
     init() throws {
-        let fhCfg = FileHandlerConfiguration(root: "/Users/ryan/gopherhole")
+        let fhCfg = FileHandlerConfiguration(root: "/var/gopherhole")
         let routes = [
-            Route(kind: .helloFriend, requestMatch: "/hello", handlerConfiguration: nil),
             Route(kind: .file, requestMatch: "/.*", handlerConfiguration: fhCfg),
         ]
         let routerCfg = RouterConfiguration(maxRequestLength: nil, routes: routes)
