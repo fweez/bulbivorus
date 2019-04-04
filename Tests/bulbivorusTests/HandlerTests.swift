@@ -28,7 +28,7 @@ class HandlerTests: XCTestCase {
     }
     
     override func tearDown() {
-       // removeTestGopherhole()
+       removeTestGopherhole()
     }
     
     /// Creates a directory at the given path, with intermediate directories, if the dir doesn't exist; XCTFail's on any throw
@@ -309,5 +309,36 @@ class HandlerTests: XCTestCase {
         tryGettingBinaryFile(path: "no-gophermap/test.jpg")
         tryGettingBinaryFile(path: "no-gophermap/test.jpeg")
         tryGettingBinaryFile(path: "no-gophermap/test.binary")
+    }
+    
+    func testTraverseOutOfGopherholeAndReadDir() {
+        let cfg = FileHandlerConfiguration(root: testRootDir)
+        let dataHandler: HandlerDataHandler = { (data: Data, writeComplete: @escaping (Int) -> Void) in
+        }
+        do {
+            _ = try FileHandler(request: "../", configuration: cfg, dataHandler: dataHandler, handlerCompletion: { })
+            XCTFail("Expected error in request for enclosing directory")
+        } catch {
+            return
+        }
+    }
+    
+    func testTraverseOutOfHoleAndReadFile() {
+        let illegalFilePath = "/tmp/illegal"
+        createFile(contents: "🧙‍♂️ NONE SHALL PASS", path: illegalFilePath)
+        let cfg = FileHandlerConfiguration(root: testRootDir)
+        let dataHandler: HandlerDataHandler = { (data: Data, writeComplete: @escaping (Int) -> Void) in
+        }
+        do {
+            _ = try FileHandler(request: "../illegal", configuration: cfg, dataHandler: dataHandler, handlerCompletion: { })
+            XCTFail("Expected error in request for file in enclosing directory")
+        } catch {
+            return
+        }
+        do {
+            try FileManager.default.removeItem(atPath: illegalFilePath)
+        } catch {
+            XCTFail("Unexpected error while removing test gopherhole at \(illegalFilePath): \(error)")
+        }
     }
 }

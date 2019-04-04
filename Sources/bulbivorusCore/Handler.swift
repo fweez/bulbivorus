@@ -154,6 +154,11 @@ struct FileHandler: Handler {
             try send(documentLocation: mapLocation)
         } else {
             let dirPath = configuration.root + "/" + request
+            let relationshipPtr = UnsafeMutablePointer<FileManager.URLRelationship>.allocate(capacity: 1)
+            try FileManager.default.getRelationship(relationshipPtr, ofDirectoryAt: URL(fileURLWithPath: configuration.root), toItemAt: URL(fileURLWithPath: dirPath))
+            guard relationshipPtr.pointee == .contains else {
+                throw FileHandler.FileError.fileDoesNotExist
+            }
             guard FileManager.default.isReadableFile(atPath: dirPath) else {
                 throw FileHandler.FileError.couldNotListDirectory
             }
@@ -171,20 +176,25 @@ struct FileHandler: Handler {
     }
     
     func send(documentLocation: String) throws {
-        var root = self.configuration.root
+        var root = configuration.root
         if root.suffix(1) != "/" && documentLocation.prefix(1) != "/" {
             root.append("/")
         }
         let path = root + documentLocation
+        let relationshipPtr = UnsafeMutablePointer<FileManager.URLRelationship>.allocate(capacity: 1)
+        try FileManager.default.getRelationship(relationshipPtr, ofDirectoryAt: URL(fileURLWithPath: root), toItemAt: URL(fileURLWithPath: path))
+        guard relationshipPtr.pointee == .contains else {
+            throw FileHandler.FileError.fileDoesNotExist
+        }
         guard FileManager.default.isReadableFile(atPath: path) else {
             throw FileHandler.FileError.fileDoesNotExist
         }
         switch FileType(path: documentLocation) {
         case .text, .map:
-            self.sendString(try String(contentsOfFile: path))
+            sendString(try String(contentsOfFile: path))
         case .image, .gif, .binary:
             let pathURL = URL(fileURLWithPath: path)
-            self.sendData(try Data(contentsOf: pathURL))
+            sendData(try Data(contentsOf: pathURL))
         }
     }
 }
