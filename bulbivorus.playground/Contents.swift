@@ -1,8 +1,8 @@
 @testable import bulbivorusCore
 import Foundation
 
-let r = "hi.*"
-let trimmedRequest = "hiii"
-if let range = trimmedRequest.range(of: r, options: .regularExpression), range.lowerBound == trimmedRequest.startIndex, range.upperBound == trimmedRequest.endIndex {
-    dump(range)
-}
+let u = URL(fileURLWithPath: "/tmp/bulbivorus")
+let v = URL(fileURLWithPath: "/tmp/bulbivorus/..")
+v.standardized
+
+

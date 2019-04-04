@@ -143,6 +143,13 @@ struct FileHandler: Handler {
         }
     }
     
+    /// Verify that the given path does not escape the gopherhole root
+    func isNotEscaping(_ path: String) -> Bool {
+        let u = URL(fileURLWithPath: path)
+        let r = URL(fileURLWithPath: configuration.root)
+        return u.standardized.absoluteString.contains(r.standardized.absoluteString)
+    }
+    
     func sendList() throws {
         let mapLocation: String
         if request.suffix(1) == "/" {
@@ -154,12 +161,7 @@ struct FileHandler: Handler {
             try send(documentLocation: mapLocation)
         } else {
             let dirPath = configuration.root + "/" + request
-            let relationshipPtr = UnsafeMutablePointer<FileManager.URLRelationship>.allocate(capacity: 1)
-            try FileManager.default.getRelationship(relationshipPtr, ofDirectoryAt: URL(fileURLWithPath: configuration.root), toItemAt: URL(fileURLWithPath: dirPath))
-            guard relationshipPtr.pointee == .contains else {
-                throw FileHandler.FileError.fileDoesNotExist
-            }
-            guard FileManager.default.isReadableFile(atPath: dirPath) else {
+            guard isNotEscaping(dirPath) && FileManager.default.isReadableFile(atPath: dirPath) else {
                 throw FileHandler.FileError.couldNotListDirectory
             }
             
@@ -181,12 +183,7 @@ struct FileHandler: Handler {
             root.append("/")
         }
         let path = root + documentLocation
-        let relationshipPtr = UnsafeMutablePointer<FileManager.URLRelationship>.allocate(capacity: 1)
-        try FileManager.default.getRelationship(relationshipPtr, ofDirectoryAt: URL(fileURLWithPath: root), toItemAt: URL(fileURLWithPath: path))
-        guard relationshipPtr.pointee == .contains else {
-            throw FileHandler.FileError.fileDoesNotExist
-        }
-        guard FileManager.default.isReadableFile(atPath: path) else {
+        guard isNotEscaping(path) && FileManager.default.isReadableFile(atPath: path) else {
             throw FileHandler.FileError.fileDoesNotExist
         }
         switch FileType(path: documentLocation) {

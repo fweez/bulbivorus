@@ -17,7 +17,9 @@ class HandlerTests: XCTestCase {
         ("testFileHandlerSendsAuthoredSubdirGophermap", testFileHandlerSendsAuthoredSubdirGophermap),
         ("testFileHandlerSendsGeneratedSubdirGophermap", testFileHandlerSendsGeneratedSubdirGophermap),
         ("testFileHandlerSendsTextFilesProperly", testFileHandlerSendsTextFilesProperly),
-        ("testFileHandlerSendsDataFilesProperly", testFileHandlerSendsDataFilesProperly)
+        ("testFileHandlerSendsDataFilesProperly", testFileHandlerSendsDataFilesProperly),
+        ("testTraverseOutOfGopherholeAndReadDir", testTraverseOutOfGopherholeAndReadDir),
+        ("testTraverseOutOfHoleAndReadFile", testTraverseOutOfHoleAndReadFile)
     ]
     enum HandlerTestsError: Error {
         case testError
