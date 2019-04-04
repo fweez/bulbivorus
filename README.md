@@ -33,7 +33,7 @@ _TODO: An actual real live Dockerfile_
 
 ## Using bulbivorus
 
-Without a config file, `bulbivorus` uses `/var/gopherhole` as the root directory. You can copy the project's `bulbivorus-config.example.json` into `bulbivorus-config.json` in the directory you start bulbivorus from to modify its behavior. You might change the default route's root to a `gopherhole` directory in your home directory, for instance. See below for more information on the settings available to you.
+Without a config file, `bulbivorus` uses `/var/gopherhole` as the root directory. You can copy the project's `bulbivorus-config.example.json` into `bulbivorus-config.json` in the directory you start `bulbivorus` from to modify its behavior. You might change the default route's root to a `gopherhole` directory in your home directory, for instance. See below for more information on the settings available to you.
 
 New to gopher? See [this excellent guide](https://davebucklin.com/play/2018/03/31/how-to-gopher.html) to learn how to create a gopherhole.
 
@@ -68,7 +68,7 @@ New to gopher? See [this excellent guide](https://davebucklin.com/play/2018/03/3
 
 ## Why on earth did you waste your time doing this?
 
-I wanted to learn how hard it was to do cross-platform Swift development. Turns out, it's not hard! The open source Foundation's `FileManager` is lacking a ton of features that the closed-source version has, which can be annoying. Installing the `swift` compiler into a real linux install is also absolute garbage, I cannot figure out why there isn't an official apt repository for Ubuntu.
+I wanted to learn how hard it was to do cross-platform Swift development. Turns out, it's not hard! The open source Foundation's `FileManager` is lacking a ton of features that the closed-source version has, which can be annoying. Installing the `swift` compiler into a real linux install is also absolute garbage, I cannot figure out why there isn't an official apt repository for Ubuntu. Testing is also much more annoying than it needs to be -- copying the test names into `allTests` in each `XCTestCase` feels super clumsy.
 
 ## What the heck does "bulbivorus" mean?
 
