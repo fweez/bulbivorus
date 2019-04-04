@@ -35,4 +35,4 @@ _TODO: An actual real live Dockerfile_
 
 Without a config file, `bulbivorus` uses `/var/gopherhole` as the root directory. You can copy the project's `bulbivorus-config.example.json` into `bulbivorus-config.json` in the directory you start bulbivorus from to modify its behavior. You might change the default route's root to a `gopherhole` directory in your home directory, for instance. See that file for more information on the settings available to you.
 
-New to gopher? See (this excellent guide)[https://davebucklin.com/play/2018/03/31/how-to-gopher.html] to learn how to create a gopherhole.
+New to gopher? See [this excellent guide](https://davebucklin.com/play/2018/03/31/how-to-gopher.html) to learn how to create a gopherhole.
