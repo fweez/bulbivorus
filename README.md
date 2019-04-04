@@ -38,7 +38,7 @@ Without a config file, `bulbivorus` uses `/var/gopherhole` as the root directory
 New to gopher? See [this excellent guide](https://davebucklin.com/play/2018/03/31/how-to-gopher.html) to learn how to create a gopherhole.
 
 ### Configuration file, annotated:
-```json
+```text
 {
     "port": 70, // The port to run the server on. 70 is default for gopher
     
